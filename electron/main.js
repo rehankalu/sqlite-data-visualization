@@ -24,7 +24,9 @@ function ensureDb() {
 }
 
 function createWindow() {
-  const preloadPath = path.join(__dirname, 'preload.js');
+  console.log("Attempting to open window")
+  const preloadPath = 'preload.js';
+  // const preloadPath = path.join(__dirname, 'preload.js');
   console.log('Preload script path:', preloadPath);
 
   mainWindow = new BrowserWindow({
@@ -33,7 +35,7 @@ function createWindow() {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      preload: path.join(__dirname, 'preload.js')
+      preload: preloadPath
     },
   });
 
@@ -164,7 +166,7 @@ function initDatabase() {
       }
     }
 
-    console.log('Database initialized successfully');
+    console.log('Exiting initDatabase()');
   } catch (error) {
     console.error('Database initialization error:', error);
     // Don't throw the error, just log it
