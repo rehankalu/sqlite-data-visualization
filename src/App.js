@@ -17,7 +17,7 @@ function App() {
   const [textColumns, setTextColumns] = useState([]);
   const [xAxis, setXAxis] = useState('');
   const [yAxis, setYAxis] = useState('');
-  const [legendField, setLegendField] = useState('');
+  const [category, setCategory] = useState('');
   const [showDataForm, setShowDataForm] = useState(false);
 
   // Load tables on component mount
@@ -70,7 +70,7 @@ function App() {
         // Reset axis and legend selections
         setXAxis(numCols.length > 0 ? numCols[0].name : '');
         setYAxis(numCols.length > 1 ? numCols[1].name : '');
-        setLegendField('');
+        setCategory('');
       } catch (error) {
         console.error('Error loading table data:', error);
       }
@@ -127,8 +127,8 @@ function App() {
 
               <LegendSelector
                 options={textColumns}
-                value={legendField}
-                onChange={setLegendField}
+                value={category}
+                onChange={setCategory}
               />
             </div>
 
@@ -148,7 +148,7 @@ function App() {
             data={tableData}
             xAxis={xAxis}
             yAxis={yAxis}
-            legendField={legendField}
+            category={category}
           />
         </div>
       )}

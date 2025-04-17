@@ -3,10 +3,10 @@
 import React from 'react';
 import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
-function ScatterPlot({ data, xAxis, yAxis, legendField }) {
+function ScatterPlot({ data, xAxis, yAxis, category }) {
   // Group data by legend field to create multiple series
   const groupedData = data.reduce((groups, item) => {
-    const key = legendField ? item[legendField] : 'All Data';
+    const key = category ? item[category] : 'All Data';
     if (!groups[key]) groups[key] = [];
     groups[key].push(item);
     return groups;

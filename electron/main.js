@@ -25,9 +25,8 @@ function ensureDb() {
 function createWindow() {
   console.log("Attempting to open window");
   try {
-
+    const preloadPath = path.join(__dirname, 'preload.js');
     console.log('Preload script path:', preloadPath);
-    const preloadPath = path.join(__dirname, 'preload2.js');
 
     mainWindow = new BrowserWindow({
       width: 1200,
@@ -178,69 +177,70 @@ function initDatabase() {
   }
 }
 
+// Basic IPC event handler for debugging Electron connection
 ipcMain.handle('ping', () => {
   console.log('pong from main');
   return 'pong';
 });
 
 // IPC event handlers for database operations
-// ipcMain.handle('get-tables', async () => {
-//   try {
-//     const database = ensureDb();
-//     const tables = database.prepare(`
-//       SELECT name FROM sqlite_master 
-//       WHERE type='table' AND name NOT LIKE 'sqlite_%'
-//     `).all();
-//     return tables.map(t => t.name);
-//   } catch (error) {
-//     console.error('Error getting tables:', error);
-//     throw error;
-//   }
-// });
+ipcMain.handle('get-tables', async () => {
+  try {
+    const database = ensureDb();
+    const tables = database.prepare(`
+      SELECT name FROM sqlite_master 
+      WHERE type='table' AND name NOT LIKE 'sqlite_%'
+    `).all();
+    return tables.map(t => t.name);
+  } catch (error) {
+    console.error('Error getting tables:', error);
+    throw error;
+  }
+});
 
-// ipcMain.handle('get-table-columns', async (event, tableName) => {
-//   try {
-//     const database = ensureDb();
-//     sql = `PRAGMA table_info("${tableName}");`;
-//     const pragma = database.prepare(sql).all();
-//     return pragma.map(col => ({
-//       name: col.name,
-//       type: col.type,
-//       nullable: col.notnull === 0,
-//       primaryKey: col.pk === 1
-//     }));
-//   } catch (error) {
-//     console.error(`Error getting columns for table ${tableName}:`, error);
-//     throw error;
-//   }
-// });
+ipcMain.handle('get-table-columns', async (event, tableName) => {
+  try {
+    const database = ensureDb();
+    sql = `PRAGMA table_info("${tableName}");`;
+    const pragma = database.prepare(sql).all();
+    return pragma.map(col => ({
+      name: col.name,
+      type: col.type,
+      nullable: col.notnull === 0,
+      primaryKey: col.pk === 1
+    }));
+  } catch (error) {
+    console.error(`Error getting columns for table ${tableName}:`, error);
+    throw error;
+  }
+});
 
-// ipcMain.handle('get-table-data', async (event, tableName) => {
-//   try {
-//     const database = ensureDb();
-//     sql = `SELECT * FROM "${tableName}";`;
-//     return database.prepare(sql).all();
-//   } catch (error) {
-//     console.error(`Error getting data from table ${tableName}:`, error);
-//     throw error;
-//   }
-// });
+ipcMain.handle('get-table-data', async (event, tableName) => {
+  try {
+    const database = ensureDb();
+    sql = `SELECT * FROM "${tableName}";`;
+    return database.prepare(sql).all();
+  } catch (error) {
+    console.error(`Error getting data from table ${tableName}:`, error);
+    throw error;
+  }
+});
 
-// ipcMain.handle('add-data-point', async (event, tableName, data) => {
-//   try {
-//     const database = ensureDb();
-//     const columns = Object.keys(data).join('", "');
-//     const placeholders = Object.keys(data).map(() => '?').join(', ');
-//     const values = Object.values(data);
+ipcMain.handle('add-data-point', async (event, tableName, data) => {
+  try {
+    const database = ensureDb();
+    const columns = Object.keys(data).join('", "');
+    const placeholders = Object.keys(data).map(() => '?').join(', ');
+    const values = Object.values(data);
 
-//     // Create new row
-//     sql = `INSERT INTO "${tableName}" ("${columns}") VALUES (${placeholders});`;
-//     const stmt = database.prepare(sql);
-//     const result = stmt.run(...values);
+    // Create new row
+    sql = `INSERT INTO "${tableName}" ("${columns}") VALUES (${placeholders});`;
+    const stmt = database.prepare(sql);
+    const result = stmt.run(...values);
 
-//     return { success: true, id: result.lastInsertRowid };
-//   } catch (error) {
-//     console.error(`Error adding data to table ${tableName}:`, error);
-//     throw error;
-//   }
-// });
+    return { success: true, id: result.lastInsertRowid };
+  } catch (error) {
+    console.error(`Error adding data to table ${tableName}:`, error);
+    throw error;
+  }
+});
