@@ -8,8 +8,7 @@
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^13.5.0",
-    "@types/better-sqlite3": "^7.6.13",
-    "better-sqlite3": "^11.9.1",
+    "better-sqlite3": "^8.5.0",
     "electron": "^25.8.4",
     "electron-is-dev": "^2.0.0",
     "react": "^18.2.0",
@@ -23,9 +22,10 @@
   "scripts": {
     "start": "set NODE_OPTIONS=--openssl-legacy-provider && react-scripts start",
     "build": "set NODE_OPTIONS=--openssl-legacy-provider && react-scripts build",
+    "rebuild": "npx electron-rebuild -f -w better-sqlite3,sqlite3",
     "test": "set NODE_OPTIONS=--openssl-legacy-provider && react-scripts test",
     "eject": "set NODE_OPTIONS=--openssl-legacy-provider && react-scripts eject",
-    "electron-dev": "concurrently \"set NODE_OPTIONS=--openssl-legacy-provider && set BROWSER=none && npm start\" \"wait-on http://localhost:3000 && electron .\"",
+    "electron-dev": "concurrently \"cross-env NODE_OPTIONS=--openssl-legacy-provider npm start\" \"wait-on http://localhost:3000 && electron .\"",
     "electron-pack": "electron-builder build --mac --win -c.extraMetadata.main=build/electron/main.js",
     "preelectron-pack": "npm run build"
   },
@@ -51,7 +51,7 @@
     "concurrently": "^8.2.0",
     "cross-env": "^7.0.3",
     "electron-builder": "^24.4.0",
-    "electron-rebuild": "^3.2.9",
+    "electron-rebuild": "^3.2.5",
     "wait-on": "^7.0.1"
   }
 }

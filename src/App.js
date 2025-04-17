@@ -98,7 +98,7 @@ function App() {
   return (
     <div className="app">
       <header>
-        <h1>SQLite Data Visualization</h1>
+        <h1>Fuel Cell Technologies Data Visualization</h1>
       </header>
 
       <div className="controls">
