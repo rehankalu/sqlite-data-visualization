@@ -93,7 +93,7 @@ function initDatabase() {
     // Initialize the database
     db = new Database(dbPath);
     console.log('Database initialized successfully');
-
+    
     // Test the database connection
     const tables = db.prepare(`
       SELECT name FROM sqlite_master 

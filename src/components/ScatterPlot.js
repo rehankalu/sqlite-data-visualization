@@ -47,8 +47,8 @@ function ScatterPlot({ data, xAxis, yAxis, category }) {
         <div className="custom-tooltip" style={{ background: '#fff', border: '1px solid #ccc', padding: '10px' }}>
           <p><strong>Company</strong>: {entry["Company"]}</p>
           <p><strong>Product</strong>: {entry["Product"]}</p>
-          <p><strong>{xLabel}</strong>: {entry[xKey]} </p>
-          <p><strong>{yLabel}</strong>: {entry[yKey]} </p>
+          <p><strong>{xLabel}</strong>: {entry[xKey]} {axisUnits[xKey]}</p>
+          <p><strong>{yLabel}</strong>: {entry[yKey]} {axisUnits[yKey]}</p>
         </div>
       );
     }
