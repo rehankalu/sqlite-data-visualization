@@ -1,0 +1,85 @@
+[39964:0423/183801.863:INFO:CONSOLE(4)] "Preload script started", source:  (4)
+[39964:0423/183801.864:INFO:CONSOLE(35)] "Preload script complete - API exposed", source:  (35)
+[39964:0423/183801.866:INFO:CONSOLE(9)] "Tables from preload test: measurements,products,Fuel Cells", source:  (9)
+[39964:0423/183802.031:INFO:CONSOLE(47506)] "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold", source: http://localhost:3000/static/js/bundle.js (47506)
+[39964:0423/183802.155:INFO:CONSOLE(2)] "%cElectron Security Warning (Disabled webSecurity) font-weight: bold; This renderer process has "webSecurity" disabled. This
+  exposes users of this app to severe security risks.
+
+For more information and help, consult
+https://electronjs.org/docs/tutorial/security.
+This warning will not show up
+once the app is packaged.", source: node:electron/js2c/sandbox_bundle (2)
+[39964:0423/183802.155:INFO:CONSOLE(2)] "%cElectron Security Warning (allowRunningInsecureContent) font-weight: bold; This renderer process has "allowRunningInsecureContent"
+  enabled. This exposes users of this app to severe security risks.
+
+  
+For more information and help, consult
+https://electronjs.org/docs/tutorial/security.
+This warning will not show up
+once the app is packaged.", source: node:electron/js2c/sandbox_bundle (2)
+[39964:0423/183802.156:INFO:CONSOLE(2)] "%cElectron Security Warning (Insecure Content-Security-Policy) font-weight: bold; This renderer process has either no Content Security
+  Policy set or a policy with "unsafe-eval" enabled. This exposes users of
+  this app to unnecessary security risks.
+
+For more information and help, consult
+https://electronjs.org/docs/tutorial/security.
+This warning will not show up
+once the app is packaged.", source: node:electron/js2c/sandbox_bundle (2)
+[39964:0423/183802.446:ERROR:CONSOLE(1)] "Request Autofill.enable failed. {"code":-32601,"message":"'Autofill.enable' wasn't found"}", source: devtools://devtools/bundled/core/protocol_client/protocol_client.js (1)
+[39964:0423/183802.446:ERROR:CONSOLE(1)] "Request Autofill.setAddresses failed. {"code":-32601,"message":"'Autofill.setAddresses' wasn't found"}", source: devtools://devtools/bundled/core/protocol_client/protocol_client.js (1)
+[39964:0423/183929.339:INFO:CONSOLE(4)] "Preload script started", source:  (4)
+[39964:0423/183929.339:INFO:CONSOLE(35)] "Preload script complete - API exposed", source:  (35)
+[39964:0423/183929.342:INFO:CONSOLE(9)] "Tables from preload test: measurements,products,Fuel Cells", source:  (9)
+[39964:0423/183929.457:INFO:CONSOLE(47506)] "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold", source: http://localhost:3000/static/js/bundle.js (47506)
+[39964:0423/183929.488:INFO:CONSOLE(2)] "%cElectron Security Warning (Disabled webSecurity) font-weight: bold; This renderer process has "webSecurity" disabled. This
+  exposes users of this app to severe security risks.
+
+For more information and help, consult
+https://electronjs.org/docs/tutorial/security.
+This warning will not show up
+once the app is packaged.", source: node:electron/js2c/sandbox_bundle (2)
+[39964:0423/183929.488:INFO:CONSOLE(2)] "%cElectron Security Warning (allowRunningInsecureContent) font-weight: bold; This renderer process has "allowRunningInsecureContent"
+  enabled. This exposes users of this app to severe security risks.
+
+  
+For more information and help, consult
+https://electronjs.org/docs/tutorial/security.
+This warning will not show up
+once the app is packaged.", source: node:electron/js2c/sandbox_bundle (2)
+[39964:0423/183929.488:INFO:CONSOLE(2)] "%cElectron Security Warning (Insecure Content-Security-Policy) font-weight: bold; This renderer process has either no Content Security
+  Policy set or a policy with "unsafe-eval" enabled. This exposes users of
+  this app to unnecessary security risks.
+
+For more information and help, consult
+https://electronjs.org/docs/tutorial/security.
+This warning will not show up
+once the app is packaged.", source: node:electron/js2c/sandbox_bundle (2)
+[39964:0423/184051.083:ERROR:CONSOLE(1)] "Uncaught (in promise) SyntaxError: Unexpected token 'H', "HTTP/1.1 4"... is not valid JSON", source: devtools://devtools/bundled/devtools_app.html?remoteBase=https://chrome-devtools-frontend.appspot.com/serve_file/@0dabe7a9d54fe36fc77c19e164b59ddbe6d6037/&can_dock=&toolbarColor=rgba(223,223,223,1)&textColor=rgba(0,0,0,1)&experiments=true (1)
+[39964:0423/185404.113:INFO:CONSOLE(4)] "Preload script started", source:  (4)
+[39964:0423/185404.114:INFO:CONSOLE(35)] "Preload script complete - API exposed", source:  (35)
+[39964:0423/185404.117:INFO:CONSOLE(9)] "Tables from preload test: measurements,products,Fuel Cells", source:  (9)
+[39964:0423/185404.228:INFO:CONSOLE(47512)] "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold", source: http://localhost:3000/static/js/bundle.js (47512)
+[39964:0423/185404.308:INFO:CONSOLE(2)] "%cElectron Security Warning (Disabled webSecurity) font-weight: bold; This renderer process has "webSecurity" disabled. This
+  exposes users of this app to severe security risks.
+
+For more information and help, consult
+https://electronjs.org/docs/tutorial/security.
+This warning will not show up
+once the app is packaged.", source: node:electron/js2c/sandbox_bundle (2)
+[39964:0423/185404.308:INFO:CONSOLE(2)] "%cElectron Security Warning (allowRunningInsecureContent) font-weight: bold; This renderer process has "allowRunningInsecureContent"
+  enabled. This exposes users of this app to severe security risks.
+
+  
+For more information and help, consult
+https://electronjs.org/docs/tutorial/security.
+This warning will not show up
+once the app is packaged.", source: node:electron/js2c/sandbox_bundle (2)
+[39964:0423/185404.309:INFO:CONSOLE(2)] "%cElectron Security Warning (Insecure Content-Security-Policy) font-weight: bold; This renderer process has either no Content Security
+  Policy set or a policy with "unsafe-eval" enabled. This exposes users of
+  this app to unnecessary security risks.
+
+For more information and help, consult
+https://electronjs.org/docs/tutorial/security.
+This warning will not show up
+once the app is packaged.", source: node:electron/js2c/sandbox_bundle (2)
+C:\Users\milarachi.rehan\OneDrive - Aurora Flight Sciences, Inc\Documents\Projects\IRAD\CryoFuels\sqlite-data-visualization\node_modules\electron\dist\electron.exe exited with signal SIGINT

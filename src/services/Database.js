@@ -54,6 +54,18 @@ class Database {
     }
   }
 
+  async addDataTable(data) {
+    try {
+      if (!window.electronAPI) {
+        throw new Error('Electron API is not available');
+      }
+      return await window.electronAPI.addDataTable(data);
+    } catch (error) {
+      console.error(`Error in addDataTable(${data.tableName}):`, error);
+      throw error;
+    }
+  }
+
   async getNumericColumns(tableName) {
     const columns = await this.getTableColumns(tableName);
 

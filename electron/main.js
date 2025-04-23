@@ -10,6 +10,7 @@ let mainWindow;
 
 function ensureDb() {
   if (!db) {
+    console.log("no db!")
     try {
       initDatabase();
       if (!db) {
@@ -32,6 +33,7 @@ function createWindow() {
     mainWindow = new BrowserWindow({
       width: 1200,
       height: 800,
+      // show: false,
       webPreferences: {
         nodeIntegration: false,
         contextIsolation: true,
@@ -53,10 +55,9 @@ function createWindow() {
       console.error('Failed to load URL:', errorDescription);
     });
 
-    win.webContents.on('render-process-gone', (event, details) => {
+    mainWindow.webContents.on('render-process-gone', (event, details) => {
       console.error('Renderer process gone:', details);
     });
-
 
     mainWindow.on('closed', () => {
       mainWindow = null;
@@ -66,52 +67,29 @@ function createWindow() {
   }
 }
 
-// Initialize the database
-async function initDatabase() {
-  try {
-    let dbPath;
-    if (isDev) {
-      dbPath = path.join(__dirname, '../data.db')
-      db = await open({
-        filename: dbPath,
-        driver: sqlite3.Database
-      });
-    } else {
-      dbPath = path.join(app.getPath('userData'), 'data.db');
-      // Initialize the database
-      db = new sqlite3.Database(dbPath, (err) => {
-        if (err) console.error('DB connection error:', err.message);
-      });
-      console.log('Database initialized successfully');
-    }
+async function createDatabase(isDev) {
+  let dbPath;
 
-    console.log('Database path:', dbPath);
+  if (isDev) {
+    dbPath = path.join(__dirname, '../data.db')
+    db = await open({
+      filename: dbPath,
+      driver: sqlite3.Database
+    });
+  } else {
+    dbPath = path.join(app.getPath('userData'), 'data.db');
+    // Initialize the database
+    db = new sqlite3.Database(dbPath, (err) => {
+      if (err) console.error('DB connection error:', err.message);
+    });
+    console.log('Database initialized successfully');
+  }
 
-    // Make sure parent directory exists
-    const dbDir = path.dirname(dbPath);
-    const fs = require('fs');
-    if (!fs.existsSync(dbDir)) {
-      fs.mkdirSync(dbDir, { recursive: true });
-    }
+  return dbPath
+}
 
-    // Test the database connection
-    const tables = await db.all(`
-      SELECT name FROM sqlite_master 
-      WHERE type='table' AND name NOT LIKE 'sqlite_%'
-      `);
-
-    console.log("Table names");
-    console.log("Row: ", row);
-
-
-    // const tables = db.prepare(`
-    //   SELECT name FROM sqlite_master 
-    //   WHERE type='table' AND name NOT LIKE 'sqlite_%'
-    // `).all();
-    console.log('Existing tables:', tables);
-
-    // Create example tables if they don't exist
-    const schemaSQL = `
+function createSchema() {
+  const schemaSQL = `
       CREATE TABLE IF NOT EXISTS measurements (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         temperature REAL NOT NULL,
@@ -131,155 +109,140 @@ async function initDatabase() {
       );
     `;
 
-    db.exec(schemaSQL, (err) => {
-      if (err) {
-        console.error('Error creating tables:', err.message);
-      } else {
-        console.log('Tables created or already exist.');
-      }
-    });
+  db.exec(schemaSQL, (err) => {
+    if (err) {
+      console.error('Error creating tables:', err.message);
+    } else {
+      console.log('Tables created or already exist.');
+    }
+  });
+}
 
-    // Insert sample data if tables are empty
-    const locations = ['Lab', 'Office', 'Warehouse', 'Outdoor'];
+function initMeasurements() {
+  const locations = ['Lab', 'Office', 'Warehouse', 'Outdoor'];
 
-    // Check if there are any measurements
-    db.get('SELECT COUNT(*) as count FROM measurements', (err, row) => {
-      if (err) {
-        console.error('Error counting measurements:', err.message);
-        return;
-      }
+  // Check if there are any measurements
+  db.get('SELECT COUNT(*) FROM measurements', (err, row) => {
+    if (err) {
+      console.error('Error counting measurements:', err.message);
+      return;
+    }
 
-      const measurementCount = row.count;
+    const measurementCount = row.count;
 
-      if (measurementCount === 0) {
-        const insertSql = `
+    if (measurementCount === 0) {
+      const insertSql = `
       INSERT INTO measurements (temperature, humidity, pressure, location, date)
       VALUES (?, ?, ?, ?, ?)
     `;
 
-        db.serialize(() => {
-          const stmt = db.prepare(insertSql);
+      db.serialize(() => {
+        const stmt = db.prepare(insertSql);
 
-          for (let i = 0; i < 50; i++) {
-            const temperature = (Math.random() * 30 + 10).toFixed(1);  // 10–40°C
-            const humidity = (Math.random() * 60 + 20).toFixed(1);     // 20–80%
-            const pressure = (Math.random() * 50 + 950).toFixed(1);    // 950–1000 hPa
-            const location = locations[Math.floor(Math.random() * locations.length)];
-            const daysAgo = Math.floor(Math.random() * 30);
-            const date = new Date(Date.now() - daysAgo * 86400000).toISOString().split('T')[0];
+        for (let i = 0; i < 50; i++) {
+          const temperature = (Math.random() * 30 + 10).toFixed(1);  // 10–40°C
+          const humidity = (Math.random() * 60 + 20).toFixed(1);     // 20–80%
+          const pressure = (Math.random() * 50 + 950).toFixed(1);    // 950–1000 hPa
+          const location = locations[Math.floor(Math.random() * locations.length)];
+          const daysAgo = Math.floor(Math.random() * 30);
+          const date = new Date(Date.now() - daysAgo * 86400000).toISOString().split('T')[0];
 
-            stmt.run(temperature, humidity, pressure, location, date);
+          stmt.run(temperature, humidity, pressure, location, date);
+        }
+
+        stmt.finalize((err) => {
+          if (err) {
+            console.error('Failed to finalize statement:', err.message);
+          } else {
+            console.log('Inserted 50 random measurements.');
           }
-
-          stmt.finalize((err) => {
-            if (err) {
-              console.error('Failed to finalize statement:', err.message);
-            } else {
-              console.log('Inserted 50 random measurements.');
-            }
-          });
         });
-      } else {
-        console.log(`Measurements already exist: count = ${measurementCount}`);
-      }
-    });
+      });
+    } else {
+      console.log(`Measurements already exist: count = ${measurementCount}`);
+    }
+  });
 
-    // better-sqlite3 version:
-    // const measurementCount = db.prepare('SELECT COUNT(*) as count FROM measurements').get().count;
+}
 
-    // if (measurementCount === 0) {
-    //   const insert = db.prepare(`
-    //     INSERT INTO measurements (temperature, humidity, pressure, location, date)
-    //     VALUES (?, ?, ?, ?, ?)
-    //   `);
+function initProducts() {
+  const categories = ['Electronics', 'Clothing', 'Food', 'Books', 'Tools'];
+  const productNames = [
+    'Laptop', 'Phone', 'Tablet', 'T-Shirt', 'Jeans', 'Bread', 'Milk',
+    'Novel', 'Textbook', 'Hammer', 'Screwdriver', 'Headphones',
+    'Camera', 'Sweater', 'Cake', 'Cheese', 'Biography', 'Drill'
+  ];
 
-    //   const locations = ['Lab', 'Office', 'Warehouse', 'Outdoor'];
+  // Check if any products exist
+  db.get('SELECT COUNT(*) FROM products', (err, row) => {
+    if (err) {
+      console.error('Error querying product count:', err.message);
+      return;
+    }
 
-    //   for (let i = 0; i < 50; i++) {
-    //     insert.run(
-    //       (Math.random() * 30 + 10).toFixed(1),  // temperature between 10-40
-    //       (Math.random() * 60 + 20).toFixed(1),  // humidity between 20-80
-    //       (Math.random() * 50 + 950).toFixed(1), // pressure between 950-1000
-    //       locations[Math.floor(Math.random() * locations.length)], // random location
-    //       new Date(Date.now() - Math.floor(Math.random() * 30) * 24 * 60 * 60 * 1000).toISOString().split('T')[0] // random date within last 30 days
-    //     );
-    //   }
-    // }
+    const productCount = row.count;
 
-    const categories = ['Electronics', 'Clothing', 'Food', 'Books', 'Tools'];
-    const productNames = [
-      'Laptop', 'Phone', 'Tablet', 'T-Shirt', 'Jeans', 'Bread', 'Milk',
-      'Novel', 'Textbook', 'Hammer', 'Screwdriver', 'Headphones',
-      'Camera', 'Sweater', 'Cake', 'Cheese', 'Biography', 'Drill'
-    ];
+    if (productCount === 0) {
+      const insertSql = `
+        INSERT INTO products (price, weight, rating, category, name)
+        VALUES (?, ?, ?, ?, ?)
+      `;
 
-    // Check if any products exist
-    db.get('SELECT COUNT(*) as count FROM products', (err, row) => {
-      if (err) {
-        console.error('Error querying product count:', err.message);
-        return;
-      }
+      db.serialize(() => {
+        const stmt = db.prepare(insertSql);
 
-      const productCount = row.count;
+        for (let i = 0; i < productNames.length; i++) {
+          const price = (Math.random() * 900 + 10).toFixed(2);    // 10–910
+          const weight = (Math.random() * 9 + 0.1).toFixed(2);     // 0.1–9.1
+          const rating = (Math.random() * 4 + 1).toFixed(1);       // 1–5
+          const category = categories[Math.floor(Math.random() * categories.length)];
+          const name = productNames[i];
 
-      if (productCount === 0) {
-        const insertSql = `
-          INSERT INTO products (price, weight, rating, category, name)
-          VALUES (?, ?, ?, ?, ?)
-        `;
+          stmt.run(price, weight, rating, category, name);
+        }
 
-        db.serialize(() => {
-          const stmt = db.prepare(insertSql);
-
-          for (let i = 0; i < productNames.length; i++) {
-            const price = (Math.random() * 900 + 10).toFixed(2);    // 10–910
-            const weight = (Math.random() * 9 + 0.1).toFixed(2);     // 0.1–9.1
-            const rating = (Math.random() * 4 + 1).toFixed(1);       // 1–5
-            const category = categories[Math.floor(Math.random() * categories.length)];
-            const name = productNames[i];
-
-            stmt.run(price, weight, rating, category, name);
+        stmt.finalize((err) => {
+          if (err) {
+            console.error('Error finalizing insert statement:', err.message);
+          } else {
+            console.log('Inserted sample products successfully.');
           }
-
-          stmt.finalize((err) => {
-            if (err) {
-              console.error('Error finalizing insert statement:', err.message);
-            } else {
-              console.log('Inserted sample products successfully.');
-            }
-          });
         });
-      } else {
-        console.log(`Products already exist: count = ${productCount}`);
-      }
-    });
+      });
+    } else {
+      console.log(`Products already exist: count = ${productCount}`);
+    }
+  });
+}
 
+// Initialize the database
+async function initDatabase() {
+  try {
+    let dbPath;
+    dbPath = await createDatabase(isDev);
 
-    // const productCount = db.prepare('SELECT COUNT(*) as count FROM products').get().count;
+    console.log('Database path:', dbPath);
 
-    // if (productCount === 0) {
-    //   const insert = db.prepare(`
-    //     INSERT INTO products (price, weight, rating, category, name)
-    //     VALUES (?, ?, ?, ?, ?)
-    //   `);
+    // Make sure parent directory exists
+    const dbDir = path.dirname(dbPath);
+    const fs = require('fs');
+    if (!fs.existsSync(dbDir)) {
+      fs.mkdirSync(dbDir, { recursive: true });
+    }
 
-    //   const categories = ['Electronics', 'Clothing', 'Food', 'Books', 'Tools'];
-    //   const productNames = [
-    //     'Laptop', 'Phone', 'Tablet', 'T-Shirt', 'Jeans', 'Bread', 'Milk',
-    //     'Novel', 'Textbook', 'Hammer', 'Screwdriver', 'Headphones',
-    //     'Camera', 'Sweater', 'Cake', 'Cheese', 'Biography', 'Drill'
-    //   ];
+    // Test the database connection
+    const tables = await db.all(`
+      SELECT name FROM sqlite_master 
+      WHERE type='table' AND name NOT LIKE 'sqlite_%'
+      `);
 
-    //   for (let i = 0; i < productNames.length; i++) {
-    //     insert.run(
-    //       (Math.random() * 900 + 10).toFixed(2),  // price between 10-910
-    //       (Math.random() * 9 + 0.1).toFixed(2),   // weight between 0.1-9.1
-    //       (Math.random() * 4 + 1).toFixed(1),     // rating between 1-5
-    //       categories[Math.floor(Math.random() * categories.length)], // random category
-    //       productNames[i]
-    //     );
-    //   }
-    // }
+    // Create example tables if they don't exist
+    createSchema();
+
+    // Insert sample data if tables are empty
+    initMeasurements();
+    initProducts();
+
     console.log('Existing tables:', tables);
 
     console.log('Exiting initDatabase()');
@@ -290,17 +253,9 @@ async function initDatabase() {
   }
 }
 
-const delay = (delayInms) => {
-  return new Promise(resolve => setTimeout(resolve, delayInms * 1000));
-};
-
 app.whenReady().then(async () => {
   try {
-    console.log("Init db")
     await initDatabase();
-    console.log("waiting")
-    delay(3);
-    console.log("done waiting")
     createWindow();
   } catch (e) {
     console.error('Error creating window:', e);
@@ -328,7 +283,7 @@ app.on('activate', () => {
 ipcMain.handle('get-tables', async () => {
   try {
     const database = ensureDb();
-    const tables = database.all(`
+    const tables = await database.all(`
   SELECT name FROM sqlite_master 
   WHERE type='table' AND name NOT LIKE 'sqlite_%'
 `, (err) => {
@@ -337,7 +292,11 @@ ipcMain.handle('get-tables', async () => {
         return;
       }
     });
-    return tables.map(t => t.name);
+    var tableNames = [];
+    tables.forEach(function(entry) {
+      tableNames.push(entry.name)
+    });
+    return tableNames;
   } catch (error) {
     console.error('Error getting tables:', error);
     throw error;
@@ -348,12 +307,13 @@ ipcMain.handle('get-table-columns', async (event, tableName) => {
   try {
     const database = ensureDb();
     sql = `PRAGMA table_info("${tableName}");`;
-    pragma = database.all(sql, (err) => {
+    pragma = await database.all(sql, (err) => {
       if (err) {
         console.error(`Failed to get table info for ${tableName}:`, err.message);
         return;
       }
     });
+
     return pragma.map(col => ({
       name: col.name,
       type: col.type,
@@ -390,6 +350,30 @@ ipcMain.handle('add-data-point', async (event, tableName, data) => {
     const values = Object.values(data);
 
     // Create new row
+    const sql = `INSERT INTO "${tableName}" (${columns}) VALUES (${placeholders});`;
+
+    const result = database.run(sql, values, function (err) {
+      if (err) {
+        console.error(`Failed to insert into ${tableName}:`, err.message);
+        return;
+      }
+    });
+
+    return { success: true, id: result.lastInsertRowid };
+  } catch (error) {
+    console.error(`Error adding data to table ${tableName}:`, error);
+    throw error;
+  }
+});
+
+ipcMain.handle('add-data-table', async (event, data) => {
+  try {
+    const database = ensureDb();
+    const columns = Object.keys(data).join('", "');
+    const placeholders = Object.keys(data).map(() => '?').join(', ');
+    const values = Object.values(data);
+
+    // Create new table
     const sql = `INSERT INTO "${tableName}" (${columns}) VALUES (${placeholders});`;
 
     const result = database.run(sql, values, function (err) {

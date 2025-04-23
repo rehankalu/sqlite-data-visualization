@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import ScatterPlot from './components/ScatterPlot';
+import DataTable from './components/DataTable';
 import AxisSelector from './components/AxisSelector';
 import LegendSelector from './components/LegendSelector';
 import TableSelector from './components/TableSelector';
-import DataEntryForm from './components/DataEntryForm';
+import DataPointEntryForm from './components/DataPointEntryForm';
+import DataTableEntryForm from './components/DataTableEntryForm';
 import Database from './services/Database';
 import './App.css';
 
@@ -18,7 +20,8 @@ function App() {
   const [xAxis, setXAxis] = useState('');
   const [yAxis, setYAxis] = useState('');
   const [category, setCategory] = useState('');
-  const [showDataForm, setShowDataForm] = useState(false);
+  const [showDataPointForm, setShowDataPointForm] = useState(false);
+  const [showDataTableInputForm, setShowDataTableInputForm] = useState(false);
 
   // Load tables on component mount
   useEffect(() => {
@@ -49,7 +52,7 @@ function App() {
   // Load table data and columns when selected table changes
   useEffect(() => {
     async function loadTableData() {
-      let filtered_columns =[];
+      let filtered_columns = [];
 
       if (!selectedTable) return;
 
@@ -82,13 +85,30 @@ function App() {
   // Handle adding new data point
   const handleAddDataPoint = async (formData) => {
     try {
-      console.log(formData)
-      await Database.addDataPoint(selectedTable, formData);
-      console.log("Do I get past addDataPoint?")
+      await Database.addDataTable(selectedTable, formData);
+
       // Refresh data
       const newData = await Database.getTableData(selectedTable);
       setTableData(newData);
-      setShowDataForm(false);
+      setShowDataTableInputForm(false);
+
+    } catch (error) {
+      console.error('Error adding data point:', error);
+      alert('Failed to add data point. Check console for details.');
+    }
+  };
+
+  // Handle adding new data table
+  const handleAddDataTable = async (formData) => {
+    let newTable = {};
+
+    try {
+      newTable = await Database.addDataTable(formData);
+
+      // Refresh data
+      const newData = await Database.getTableData(newTable);
+      setTableData(newData);
+      setShowDataPointForm(false);
     } catch (error) {
       console.error('Error adding data point:', error);
       alert('Failed to add data point. Check console for details.');
@@ -100,67 +120,100 @@ function App() {
       <header>
         <h1>Fuel Cell Technologies Data Visualization</h1>
       </header>
+      <div className="grid-container">
+        <div className="controlPanel">
+          <div className="controls">
+            <TableSelector
+              tables={tables}
+              selectedTable={selectedTable}
+              onTableChange={setSelectedTable}
+            />
 
-      <div className="controls">
-        <TableSelector
-          tables={tables}
-          selectedTable={selectedTable}
-          onTableChange={setSelectedTable}
-        />
+            {selectedTable && (
+              <>
+                <AxisSelector
+                  label="X-Axis"
+                  options={numericColumns}
+                  value={xAxis}
+                  onChange={setXAxis}
+                />
 
-        {selectedTable && (
-          <>
-            <div className="axis-controls">
-              <AxisSelector
-                label="X-Axis"
-                options={numericColumns}
-                value={xAxis}
-                onChange={setXAxis}
-              />
+                <AxisSelector
+                  label="Y-Axis"
+                  options={numericColumns}
+                  value={yAxis}
+                  onChange={setYAxis}
+                />
 
-              <AxisSelector
-                label="Y-Axis"
-                options={numericColumns}
-                value={yAxis}
-                onChange={setYAxis}
-              />
-
-              <LegendSelector
-                options={textColumns}
-                value={category}
-                onChange={setCategory}
-              />
+                <LegendSelector
+                  options={textColumns}
+                  value={category}
+                  onChange={setCategory}
+                />
+              </>
+            )}
+          </div>
+          {selectedTable && (
+            <div className="buttons">
+              <button
+                className="button add-data-point-btn"
+                onClick={() => setShowDataPointForm(true)}
+              >
+                + Add Datapoint to {selectedTable}
+              </button>
+              <button
+                className="button add-data-table-btn"
+                onClick={() => setShowDataTableInputForm(true)}
+              >
+                + Add Data Table
+              </button>
             </div>
-
-            <button
-              className="add-data-btn"
-              onClick={() => setShowDataForm(true)}
-            >
-              + Add Data
-            </button>
-          </>
-        )}
+          )}
+        </div>
       </div>
-
       {selectedTable && xAxis && yAxis && (
-        <div className="visualization">
-          <ScatterPlot
-            data={tableData}
-            xAxis={xAxis}
-            yAxis={yAxis}
-            category={category}
-          />
+        <div className="content">
+          <div className="visualization">
+            <ScatterPlot
+              data={tableData}
+              xAxis={xAxis}
+              yAxis={yAxis}
+              category={category}
+            />
+          </div>
+
+          <div className="tabulation">
+            <DataTable
+              data={tableData}
+              xAxis={xAxis}
+              yAxis={yAxis}
+              category={category}
+            />
+          </div>
         </div>
       )}
 
-      {showDataForm && (
+      {showDataPointForm && (
         <div className="modal">
           <div className="modal-content">
-            <DataEntryForm
+            <DataPointEntryForm
               tableName={selectedTable}
               columns={tableColumns}
               onSubmit={handleAddDataPoint}
-              onCancel={() => setShowDataForm(false)}
+              onCancel={() => setShowDataPointForm(false)}
+            />
+          </div>
+        </div>
+      )}
+
+      {showDataTableInputForm && (
+        <div className="modal">
+          <div className="modal-content">
+            <DataTableEntryForm
+              tableName={selectedTable}
+              columns={tableColumns}
+              onSubmit={handleAddDataTable}
+              onCancel={() => setShowDataTableInputForm(false)}
             />
           </div>
         </div>

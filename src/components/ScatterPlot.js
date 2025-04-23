@@ -42,7 +42,6 @@ function ScatterPlot({ data, xAxis, yAxis, category }) {
     if (active && payload && payload.length) {
       const entry = payload[0].payload;
       // Assumes data always has a Company and Product name associated with the component
-      console.log(entry);
       return (
         <div className="custom-tooltip" style={{ background: '#fff', border: '1px solid #ccc', padding: '10px' }}>
           <p><strong>Company</strong>: {entry["Company"]}</p>
@@ -57,7 +56,7 @@ function ScatterPlot({ data, xAxis, yAxis, category }) {
   };
 
   return (
-    <ResponsiveContainer width="100%" height={400}>
+    <ResponsiveContainer width="100%" height="90%">
       <ScatterChart
         margin={{ top: 20, right: 30, left: 20, bottom: 10 }}
       >
@@ -81,7 +80,9 @@ function ScatterPlot({ data, xAxis, yAxis, category }) {
               xKey={xAxis} yKey={yAxis}
             />}
         />
-        <Legend />
+        <Legend
+          wrapperStyle={{ paddingTop: "20px" }}
+        />
 
         {/* Think: groupedData = categories == {"Puppy": [dpA, dpB], "Kitten": [dpC]} */}
         {Object.entries(groupedData).map(([key, items], index) => (
