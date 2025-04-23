@@ -10,9 +10,21 @@ body {
 }
 
 .app {
-  max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  /* full viewport height */
+  margin: 0;
+}
+
+.content {
+  display: grid;
+  grid-template-columns: 1fr 550px;
+  gap: 1rem;
+  flex: 1;
+  min-height: 0;
 }
 
 header {
@@ -24,26 +36,53 @@ h1 {
   color: #333;
 }
 
-.controls {
+table {
+	--color: #d0d0f5;
+}
+
+thead,
+tfoot {
+	background: var(--color);
+}
+
+tbody tr:nth-child(even) {
+	background: color-mix(in srgb, var(--color), transparent 60%);
+}
+
+td {
+  text-align: center;
+}
+
+.grid-container {
+  align-items: center;
+}
+
+.controlPanel {
   background-color: #fff;
   border-radius: 8px;
   padding: 15px;
   margin-bottom: 20px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
+  display: grid;
+  grid-template-rows: repeat(2, 1fr);
+  /* display: block;
+  flex-wrap: wrap; */
   justify-content: space-between;
 }
 
-.axis-controls {
-  display: flex;
-  flex-wrap: wrap;
+.buttons {
+  display: inline-block;
+}
+
+.controls {
+  display: inline-flex;
   gap: 15px;
   margin: 10px 0;
 }
 
-.table-selector, .axis-selector, .legend-selector {
+.table-selector,
+.axis-selector,
+.legend-selector {
   margin-right: 15px;
 }
 
@@ -62,27 +101,38 @@ select {
   min-width: 150px;
 }
 
-.add-data-btn {
+.button {
   background-color: #4caf50;
   color: white;
   border: none;
   border-radius: 4px;
+  margin: 5px;
   padding: 8px 16px;
   cursor: pointer;
   font-weight: bold;
   transition: background-color 0.3s;
 }
 
-.add-data-btn:hover {
+.button:hover {
   background-color: #45a049;
 }
 
 .visualization {
   background-color: #fff;
   border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.tabulation {
+  background-color: #fff;
+  border-radius: 8px;
   padding: 20px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  height: 500px;
+  overflow-y: scroll;
+}
+
+.dataTable {
+  margin: 0 auto;
 }
 
 .modal {
@@ -159,17 +209,10 @@ select {
 }
 
 @media (max-width: 768px) {
-  .axis-controls {
-    flex-direction: column;
-    gap: 10px;
-  }
-  
-  .table-selector, .axis-selector, .legend-selector {
+  .table-selector,
+  .axis-selector,
+  .legend-selector {
     margin-right: 0;
     margin-bottom: 10px;
-  }
-  
-  .visualization {
-    height: 400px;
   }
 }

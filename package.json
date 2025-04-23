@@ -8,25 +8,28 @@
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^13.5.0",
-    "better-sqlite3": "^8.5.0",
-    "electron": "^25.8.4",
+    "electron": "^35.2.0",
     "electron-is-dev": "^2.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-scripts": "^5.0.1",
     "recharts": "^2.7.2",
+    "sqlite": "^5.1.1",
     "sqlite3": "^5.1.7",
     "web-vitals": "^2.1.4"
   },
   "main": "electron/main.js",
   "scripts": {
-    "start": "set NODE_OPTIONS=--openssl-legacy-provider && react-scripts start",
-    "build": "set NODE_OPTIONS=--openssl-legacy-provider && react-scripts build",
-    "test": "set NODE_OPTIONS=--openssl-legacy-provider && react-scripts test",
-    "eject": "set NODE_OPTIONS=--openssl-legacy-provider && react-scripts eject",
-    "electron-dev": "concurrently \"set NODE_OPTIONS=--openssl-legacy-provider && set BROWSER=none && npm start\" \"wait-on http://localhost:3000 && electron .\"",
-    "electron-pack": "electron-builder build --mac --win -c.extraMetadata.main=build/electron/main.js",
-    "preelectron-pack": "npm run build"
+    "start": "cross-env NODE_OPTIONS=--openssl-legacy-provider react-scripts start",
+    "build": "cross-env NODE_OPTIONS=--openssl-legacy-provider react-scripts build",
+    "test": "cross-env NODE_OPTIONS=--openssl-legacy-provider react-scripts test",
+    "eject": "cross-env NODE_OPTIONS=--openssl-legacy-provider react-scripts eject",
+    "react-start": "npm run start",
+    "electron-start": "wait-on http://localhost:3000 && electron . --enable-logging 2>electron-errors.log",
+    "electron-dev": "concurrently --kill-others-on-fail \"npm run react-start\" \"npm run electron-start\"",
+    "rebuild": "npx electron-rebuild -f -w sqlite3",
+    "preelectron-pack": "npm run build",
+    "electron-pack": "electron-builder build --mac --win -c.extraMetadata.main=build/electron/main.js"
   },
   "eslintConfig": {
     "extends": [

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-function DataEntryForm({ tableName, columns, onSubmit, onCancel }) {
+function DataPointEntryForm({ tableName, columns, onSubmit, onCancel }) {
   const [formData, setFormData] = useState({});
 
   useEffect(() => {
@@ -51,4 +51,4 @@ function DataEntryForm({ tableName, columns, onSubmit, onCancel }) {
   );
 }
 
-export default DataEntryForm;
+export default DataPointEntryForm;

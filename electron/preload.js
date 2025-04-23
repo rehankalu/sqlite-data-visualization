@@ -3,11 +3,12 @@ const { contextBridge, ipcRenderer } = require('electron');
 console.log('Preload script started');
 
 // Test IPC
-ipcRenderer.invoke('get-tables').then(tables => {
-  console.log('Tables from preload test:', tables);
-}).catch(err => {
-  console.error('Error in preload test:', err);
-});
+ipcRenderer.invoke('get-tables')
+  .then(tables => {
+    console.log('Tables from preload test:', tables);
+  }).catch(err => {
+    console.error('Error in preload test:', err);
+  });
 
 contextBridge.exposeInMainWorld(
   'electronAPI',
@@ -23,6 +24,9 @@ contextBridge.exposeInMainWorld(
     },
     addDataPoint: (tableName, data) => {
       return ipcRenderer.invoke('add-data-point', tableName, data);
+    },
+    addDataTable: (data) => {
+      return ipcRenderer.invoke('add-data-table', data);
     }
   }
 );
