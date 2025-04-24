@@ -14,9 +14,9 @@ body {
   padding: 20px;
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  /* full viewport height */
+  height: 95vh;
   margin: 0;
+  overflow: hidden;
 }
 
 .content {
@@ -43,6 +43,12 @@ table {
 thead,
 tfoot {
 	background: var(--color);
+}
+
+th {
+  position: sticky; /* Or -webkit-sticky */
+  top: 0;
+  z-index: 1; /* Optional, for visual clarity */
 }
 
 tbody tr:nth-child(even) {
@@ -128,7 +134,7 @@ select {
   border-radius: 8px;
   padding: 20px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  overflow-y: scroll;
+  overflow-y: auto;
 }
 
 .dataTable {
