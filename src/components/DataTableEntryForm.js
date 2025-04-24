@@ -1,49 +1,31 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 
-function DataTableEntryForm({ tableName, columns, onSubmit, onCancel }) {
-  const [formData, setFormData] = useState({});
+function DataTableEntryForm({ onSubmit, onCancel }) {
+  const [selectedFile, setSelectedFile] = useState(null);
 
-  useEffect(() => {
-    // Reset form when table changes
-    const initialData = {};
-    if (columns) {
-      columns.forEach(col => {
-          initialData[col.name] = '';
-        });
-    }
-    setFormData(initialData);
-  }, [columns]);
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+  const handleFileChange = (event) => {
+    console.log(event.target.value)
+    console.log(event.target.files[0])
+    setSelectedFile(event.target.files[0]);
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(formData);
+    if (selectedFile) {
+      onSubmit(selectedFile.path);
+    }
+    setSelectedFile(null);
   };
 
-  if (!columns) return null;
-
   return (
-    <div className="data-entry-form">
-      <h3>Add Data to {tableName}</h3>
+    <div className="data-table-entry-form">
+      <h2>Upload File</h2>
       <form onSubmit={handleSubmit}>
-        {columns.map(col => (
-          <div key={col.name} className="form-group">
-            <label>{col.name}:</label>
-            <input
-              type={col.type === 'INTEGER' || col.type === 'REAL' ? 'number' : 'text'}
-              name={col.name}
-              value={formData[col.name] || ''}
-              onChange={handleChange}
-              required={!col.nullable}
-            />
-          </div>
-        ))}
+        <input type="file" accept=".xlsx,.xls" onChange={handleFileChange} />
+        {selectedFile && <p>Selected file: {selectedFile.name}</p>}
+
         <div className="form-buttons">
-          <button type="submit">Save</button>
+          <button type="submit" disabled={!selectedFile}>Upload</button>
           <button type="button" onClick={onCancel}>Cancel</button>
         </div>
       </form>

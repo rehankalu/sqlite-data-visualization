@@ -10,6 +10,7 @@ ipcRenderer.invoke('get-tables')
     console.error('Error in preload test:', err);
   });
 
+// <Function in Database.js>: () => return ipcRenderer.invoke(<Function in main.js>, <inputs>)
 contextBridge.exposeInMainWorld(
   'electronAPI',
   {
@@ -25,8 +26,8 @@ contextBridge.exposeInMainWorld(
     addDataPoint: (tableName, data) => {
       return ipcRenderer.invoke('add-data-point', tableName, data);
     },
-    addDataTable: (data) => {
-      return ipcRenderer.invoke('add-data-table', data);
+    addDataTable: (filePath) => {
+      return ipcRenderer.invoke('add-data-table', filePath);
     }
   }
 );

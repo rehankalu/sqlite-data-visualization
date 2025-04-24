@@ -8,21 +8,164 @@ const { open } = require('sqlite');
 let db;
 let mainWindow;
 
-function ensureDb() {
-  if (!db) {
-    console.log("no db!")
-    try {
-      initDatabase();
-      if (!db) {
-        throw new Error('Database initialization failed');
+// IPC event handlers for database operations
+ipcMain.handle('get-tables', async () => {
+  try {
+    const tables = await db.all(`
+  SELECT name FROM sqlite_master 
+  WHERE type='table' AND name NOT LIKE 'sqlite_%'
+`, (err) => {
+      if (err) {
+        console.error('Failed to retrieve tables:', err.message);
+        return;
       }
-    } catch (error) {
-      console.error('Failed to initialize database:', error);
-      throw error;
-    }
+    });
+    var tableNames = [];
+    tables.forEach(function (entry) {
+      tableNames.push(entry.name)
+    });
+    return tableNames;
+  } catch (error) {
+    console.error('Error getting tables:', error);
+    throw error;
   }
-  return db;
-}
+});
+
+ipcMain.handle('get-table-columns', async (event, tableName) => {
+  try {
+    sql = `PRAGMA table_info("${tableName}");`;
+    pragma = await db.all(sql, (err) => {
+      if (err) {
+        console.error(`Failed to get table info for ${tableName}:`, err.message);
+        return;
+      }
+    });
+
+    return pragma.map(col => ({
+      name: col.name,
+      type: col.type,
+      nullable: col.notnull === 0,
+      primaryKey: col.pk === 1
+    }));
+  } catch (error) {
+    console.error(`Error getting columns for table ${tableName}:`, error);
+    throw error;
+  }
+});
+
+ipcMain.handle('get-table-data', async (event, tableName) => {
+  try {
+    sql = `SELECT * FROM "${tableName}";`;
+    return db.all(sql, (err) => {
+      if (err) {
+        console.error(`Failed to get table info for ${tableName}:`, err.message);
+        return;
+      }
+    });
+  } catch (error) {
+    console.error(`Error getting data from table ${tableName}:`, error);
+    throw error;
+  }
+});
+
+ipcMain.handle('add-data-point', async (event, tableName, data) => {
+  try {
+    const columns = Object.keys(data).join('", "');
+    const placeholders = Object.keys(data).map(() => '?').join(', ');
+    const values = Object.values(data);
+
+    // Create new row
+    const sql = `INSERT INTO "${tableName}" (${columns}) VALUES (${placeholders});`;
+    console.log(sql)
+
+    const result = db.run(sql, values, function (err) {
+      if (err) {
+        console.error(`Failed to insert into ${tableName}:`, err.message);
+        return;
+      }
+    });
+
+    return { success: true, id: result.lastInsertRowid };
+  } catch (error) {
+    console.error(`Error adding data to table ${tableName}:`, error);
+    throw error;
+  }
+});
+
+ipcMain.handle('add-data-table', async (event, filePath) => {
+  try {
+    const workbook = xlsx.readFile(filePath);
+    const sheetNames = workbook.SheetNames;
+
+    if (sheetNames.length !== 1) {
+      console.error('Excel file must contain exactly one sheet.');
+      return;
+    }
+
+    const sheetName = sheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    const data = xlsx.utils.sheet_to_json(sheet, { header: 1 });
+
+    if (data.length < 2) {
+      console.error('Excel must have a header and at least one data row.');
+      return;
+    }
+
+    const headers = data[0];
+    const rows = data.slice(1);
+
+    // === Table Name based on file name (or timestamp) ===
+    const baseName = path.basename(filePath, path.extname(filePath));
+    const safeName = baseName.replace(/[^a-zA-Z0-9_]/g, '_');
+    const tableName = `excel_${safeName}_${Date.now()}`;
+
+    const columnDefs = headers.map(h => `"${h}" TEXT`).join(', ');
+    const placeholders = headers.map(() => '?').join(', ');
+
+    db.serialize(() => {
+      db.run(`CREATE TABLE IF NOT EXISTS "${tableName}" (${columnDefs})`);
+
+      const stmt = db.prepare(
+        `INSERT INTO "${tableName}" (${headers.map(h => `"${h}"`).join(', ')}) VALUES (${placeholders})`
+      );
+
+      rows.forEach(row => {
+        const values = headers.map((_, i) => row[i] || null);
+        stmt.run(values);
+      });
+
+      stmt.finalize(() => {
+        console.log(`✅ Data inserted into table "${tableName}"`);
+        db.close();
+      });
+    });
+    return tableName;
+  } catch (err) {
+    console.error('Error processing Excel:', err);
+  }
+
+});
+
+app.whenReady().then(async () => {
+  try {
+    await initDatabase();
+    createWindow();
+  } catch (e) {
+    console.error('Error creating window:', e);
+  }
+});
+
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') {
+    app.quit();
+  }
+});
+
+app.on('activate', () => {
+  if (mainWindow === null) {
+    createWindow();
+  }
+});
 
 function createWindow() {
   console.log("Attempting to open window");
@@ -252,140 +395,3 @@ async function initDatabase() {
     db = null; // Set db to null so we can check for it later
   }
 }
-
-app.whenReady().then(async () => {
-  try {
-    await initDatabase();
-    createWindow();
-  } catch (e) {
-    console.error('Error creating window:', e);
-  }
-});
-
-// app.on('ready', () => {
-//   initDatabase();
-//   createWindow();
-// });
-
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
-});
-
-app.on('activate', () => {
-  if (mainWindow === null) {
-    createWindow();
-  }
-});
-
-// IPC event handlers for database operations
-ipcMain.handle('get-tables', async () => {
-  try {
-    const database = ensureDb();
-    const tables = await database.all(`
-  SELECT name FROM sqlite_master 
-  WHERE type='table' AND name NOT LIKE 'sqlite_%'
-`, (err) => {
-      if (err) {
-        console.error('Failed to retrieve tables:', err.message);
-        return;
-      }
-    });
-    var tableNames = [];
-    tables.forEach(function(entry) {
-      tableNames.push(entry.name)
-    });
-    return tableNames;
-  } catch (error) {
-    console.error('Error getting tables:', error);
-    throw error;
-  }
-});
-
-ipcMain.handle('get-table-columns', async (event, tableName) => {
-  try {
-    const database = ensureDb();
-    sql = `PRAGMA table_info("${tableName}");`;
-    pragma = await database.all(sql, (err) => {
-      if (err) {
-        console.error(`Failed to get table info for ${tableName}:`, err.message);
-        return;
-      }
-    });
-
-    return pragma.map(col => ({
-      name: col.name,
-      type: col.type,
-      nullable: col.notnull === 0,
-      primaryKey: col.pk === 1
-    }));
-  } catch (error) {
-    console.error(`Error getting columns for table ${tableName}:`, error);
-    throw error;
-  }
-});
-
-ipcMain.handle('get-table-data', async (event, tableName) => {
-  try {
-    const database = ensureDb();
-    sql = `SELECT * FROM "${tableName}";`;
-    return database.all(sql, (err) => {
-      if (err) {
-        console.error(`Failed to get table info for ${tableName}:`, err.message);
-        return;
-      }
-    });
-  } catch (error) {
-    console.error(`Error getting data from table ${tableName}:`, error);
-    throw error;
-  }
-});
-
-ipcMain.handle('add-data-point', async (event, tableName, data) => {
-  try {
-    const database = ensureDb();
-    const columns = Object.keys(data).join('", "');
-    const placeholders = Object.keys(data).map(() => '?').join(', ');
-    const values = Object.values(data);
-
-    // Create new row
-    const sql = `INSERT INTO "${tableName}" (${columns}) VALUES (${placeholders});`;
-
-    const result = database.run(sql, values, function (err) {
-      if (err) {
-        console.error(`Failed to insert into ${tableName}:`, err.message);
-        return;
-      }
-    });
-
-    return { success: true, id: result.lastInsertRowid };
-  } catch (error) {
-    console.error(`Error adding data to table ${tableName}:`, error);
-    throw error;
-  }
-});
-
-ipcMain.handle('add-data-table', async (event, data) => {
-  try {
-    const database = ensureDb();
-    const columns = Object.keys(data).join('", "');
-    const placeholders = Object.keys(data).map(() => '?').join(', ');
-    const values = Object.values(data);
-
-    // Create new table
-    const sql = `INSERT INTO "${tableName}" (${columns}) VALUES (${placeholders});`;
-
-    const result = database.run(sql, values, function (err) {
-      if (err) {
-        console.error(`Failed to insert into ${tableName}:`, err.message);
-        return;
-      }
-    });
-
-    return { success: true, id: result.lastInsertRowid };
-  } catch (error) {
-    console.error(`Error adding data to table ${tableName}:`, error);
-    throw error;
-  }
-});

@@ -1,5 +1,5 @@
 import React from 'react';
-import DataPointSelector from './DataPointSelector';
+import DataPointRow from './DataPointRow';
 
 function DataTable({ data, xAxis, yAxis, category }) {
 
@@ -23,7 +23,7 @@ function DataTable({ data, xAxis, yAxis, category }) {
       </thead>
       <tbody>
         {data.map((item) => (
-          <DataPointSelector
+          <DataPointRow
             key={item.id}
             dataPoint={item}
             xAxis={xAxis}

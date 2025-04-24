@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-function DataPointSelector({ dataPoint, xAxis, yAxis, category }) {
+function DataPointRow({ dataPoint, xAxis, yAxis, category }) {
 
     const [isChecked, setIsChecked] = useState(true);
 
@@ -33,4 +33,4 @@ function DataPointSelector({ dataPoint, xAxis, yAxis, category }) {
 
 }
 
-export default DataPointSelector;
+export default DataPointRow;

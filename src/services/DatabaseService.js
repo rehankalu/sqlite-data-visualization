@@ -1,11 +1,12 @@
-class Database {
+class DatabaseService {
   constructor() {
     // Check if electronAPI is available
     if (!window.electronAPI) {
       console.error('Electron API is not available. Make sure preload script is properly configured.');
     }
   }
-
+  
+  // Reminder: these functions are called in const typically at App.js or React components, and are defined in electron/main.js. Names in electron/main.js and here are tied through electron/preload.js context bridge
   async getTables() {
     try {
       if (!window.electronAPI) {
@@ -54,14 +55,14 @@ class Database {
     }
   }
 
-  async addDataTable(data) {
+  async addDataTable(filePath) {
     try {
       if (!window.electronAPI) {
         throw new Error('Electron API is not available');
       }
-      return await window.electronAPI.addDataTable(data);
+      return await window.electronAPI.addDataTable(filePath);
     } catch (error) {
-      console.error(`Error in addDataTable(${data.tableName}):`, error);
+      console.error(`Error in addDataTable(${filePath}):`, error);
       throw error;
     }
   }
@@ -82,5 +83,5 @@ class Database {
   }
 }
 
-const databaseInstance = new Database();
+const databaseInstance = new DatabaseService();
 export default databaseInstance;

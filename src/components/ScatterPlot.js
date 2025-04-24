@@ -17,6 +17,7 @@ function ScatterPlot({ data, xAxis, yAxis, category }) {
   // Generate colors for each series
   const colors = ['#8884d8', '#82ca9d', '#ffc658', '#ff8042', '#0088fe', '#00C49F', '#FFBB28'];
 
+  // If axes have a defined reformatted name, apply it here
   const axisLabels = {
     company: 'Company',
     product: 'Product',
@@ -25,6 +26,9 @@ function ScatterPlot({ data, xAxis, yAxis, category }) {
     stack_mass: 'Stack Mass',
     stack_volume: 'Stack Volume'
   };
+  
+  const xLabel = axisLabels[xAxis] ? axisLabels[xAxis] : xAxis;
+  const yLabel = axisLabels[yAxis] ? axisLabels[yAxis] : yAxis;
 
   const axisUnits = {
     rated_power: ['kW', 'hp'],
@@ -33,8 +37,19 @@ function ScatterPlot({ data, xAxis, yAxis, category }) {
     stack_volume: ['L', 'gal', 'ft^3']
   }
 
-  const xLabel = axisLabels[xAxis] ? axisLabels[xAxis] : xAxis;
-  const yLabel = axisLabels[yAxis] ? axisLabels[yAxis] : yAxis;
+  // Calculate axes domains
+  const xData = data.map(dataPointEntry => dataPointEntry[xAxis]);
+  const yData = data.map(dataPointEntry => dataPointEntry[yAxis]);
+
+  const xMin = Math.min(...xData);
+  const xMax = Math.max(...xData);
+  const xBuffer = .1 * (xMax - xMin);
+  const xDom = [10*Math.floor((xMin - xBuffer)/10), 10*Math.ceil((xMax + xBuffer)/10)];
+
+  const yMin = Math.min(...yData);
+  const yMax = Math.max(...yData);
+  const yBuffer = .1 * (yMax - yMin);
+  const yDom = [10*Math.floor((yMin - yBuffer)/10), 10*Math.ceil((yMax + yBuffer)/10)];
 
   // Pulled from https://recharts.org/en-US/examples/CustomContentOfTooltip
   // TODO: Adjust to display Company, Product, and displayed x, y values
@@ -63,12 +78,14 @@ function ScatterPlot({ data, xAxis, yAxis, category }) {
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis
           type="number"
+          domain={xDom}
           dataKey={xAxis}
           name={xAxis}
           label={{ value: xLabel, position: 'insideBottomRight', offset: -5 }}
         />
         <YAxis
           type="number"
+          domain={yDom}
           dataKey={yAxis}
           name={yAxis}
           label={{ value: yLabel, angle: -90, position: 'insideLeft' }}

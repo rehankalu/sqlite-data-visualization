@@ -8,8 +8,8 @@ function DataPointEntryForm({ tableName, columns, onSubmit, onCancel }) {
     const initialData = {};
     if (columns) {
       columns.forEach(col => {
-          initialData[col.name] = '';
-        });
+        initialData[col.name] = '';
+      });
     }
     setFormData(initialData);
   }, [columns]);
@@ -27,10 +27,10 @@ function DataPointEntryForm({ tableName, columns, onSubmit, onCancel }) {
   if (!columns) return null;
 
   return (
-    <div className="data-entry-form">
+    <div className="data-point-entry-form">
       <h3>Add Data to {tableName}</h3>
       <form onSubmit={handleSubmit}>
-        {columns.map(col => (
+        {columns.map((col, i) => (
           <div key={col.name} className="form-group">
             <label>{col.name}:</label>
             <input
@@ -39,9 +39,11 @@ function DataPointEntryForm({ tableName, columns, onSubmit, onCancel }) {
               value={formData[col.name] || ''}
               onChange={handleChange}
               required={!col.nullable}
+              autoFocus={i === 0}
             />
           </div>
-        ))}
+        )
+        )}
         <div className="form-buttons">
           <button type="submit">Save</button>
           <button type="button" onClick={onCancel}>Cancel</button>

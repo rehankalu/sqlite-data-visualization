@@ -16,7 +16,8 @@
     "recharts": "^2.7.2",
     "sqlite": "^5.1.1",
     "sqlite3": "^5.1.7",
-    "web-vitals": "^2.1.4"
+    "web-vitals": "^2.1.4",
+    "xlsx": "^0.18.5"
   },
   "main": "electron/main.js",
   "scripts": {
