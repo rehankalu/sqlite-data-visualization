@@ -1,9 +1,11 @@
 console.log("Electron main process starting...")
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, dialog, ipcMain } = require('electron');
 const path = require('path');
 const isDev = require('electron-is-dev');
-const sqlite3 = require('sqlite3').verbose();
+const fs = require('fs');
 const { open } = require('sqlite');
+const sqlite3 = require('sqlite3').verbose();
+const XLSX = require('xlsx');
 
 let db;
 let mainWindow;
@@ -68,6 +70,7 @@ ipcMain.handle('get-table-data', async (event, tableName) => {
   }
 });
 
+
 ipcMain.handle('add-data-point', async (event, tableName, data) => {
   try {
     const columns = Object.keys(data).join('", "');
@@ -75,8 +78,7 @@ ipcMain.handle('add-data-point', async (event, tableName, data) => {
     const values = Object.values(data);
 
     // Create new row
-    const sql = `INSERT INTO "${tableName}" (${columns}) VALUES (${placeholders});`;
-    console.log(sql)
+    const sql = `INSERT INTO "${tableName}" (\"${columns}\") VALUES (${placeholders});`;
 
     const result = db.run(sql, values, function (err) {
       if (err) {
@@ -84,8 +86,9 @@ ipcMain.handle('add-data-point', async (event, tableName, data) => {
         return;
       }
     });
+    
+    return { success: true, id: result.lastID };
 
-    return { success: true, id: result.lastInsertRowid };
   } catch (error) {
     console.error(`Error adding data to table ${tableName}:`, error);
     throw error;
@@ -144,6 +147,18 @@ ipcMain.handle('add-data-table', async (event, filePath) => {
     console.error('Error processing Excel:', err);
   }
 
+});
+
+ipcMain.handle('select-excel', async () => {
+  const { canceled, filePaths } = await dialog.showOpenDialog({
+    filters: [{ name: 'Excel Files', extensions: ['xlsx', 'xls'] }],
+    properties: ['openFile'],
+  });
+  if (!canceled && filePaths[0]) {
+    const filePath = filePaths[0];
+    // continue processing
+    processExcelFile(filePath);
+  }
 });
 
 app.whenReady().then(async () => {
@@ -219,6 +234,7 @@ async function createDatabase(isDev) {
       filename: dbPath,
       driver: sqlite3.Database
     });
+    if (db) console.log("db created")
   } else {
     dbPath = path.join(app.getPath('userData'), 'data.db');
     // Initialize the database
@@ -265,13 +281,16 @@ function initMeasurements() {
   const locations = ['Lab', 'Office', 'Warehouse', 'Outdoor'];
 
   // Check if there are any measurements
-  db.get('SELECT COUNT(*) FROM measurements', (err, row) => {
+  db.get('SELECT COUNT(*) as count FROM measurements', (err, row) => {
+
+    console.log("Counting DB entries");
     if (err) {
       console.error('Error counting measurements:', err.message);
       return;
     }
 
     const measurementCount = row.count;
+    console.log(measurementCount);
 
     if (measurementCount === 0) {
       const insertSql = `
@@ -306,6 +325,7 @@ function initMeasurements() {
     }
   });
 
+  console.log("Exiting initMeasurements");
 }
 
 function initProducts() {
@@ -317,7 +337,7 @@ function initProducts() {
   ];
 
   // Check if any products exist
-  db.get('SELECT COUNT(*) FROM products', (err, row) => {
+  db.get('SELECT COUNT(*) as count FROM products', (err, row) => {
     if (err) {
       console.error('Error querying product count:', err.message);
       return;
@@ -394,4 +414,61 @@ async function initDatabase() {
     // Don't throw the error, just log it
     db = null; // Set db to null so we can check for it later
   }
+}
+
+async function processExcelFile(filePath) {
+  console.log("Processing file:", filePath);
+
+  if (!fs.existsSync(filePath)) {
+    console.error('File does not exist:', filePath);
+    return;
+  }
+
+  const workbook = XLSX.readFile(filePath);
+  if (workbook.SheetNames.length !== 1) {
+    console.error('The Excel file must contain exactly one sheet.');
+    return;
+  }
+
+  const sheetName = workbook.SheetNames[0];
+  const sheet = workbook.Sheets[sheetName];
+  const data = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+  if (data.length < 2) {
+    console.error('The sheet must contain at least one header row and one data row.');
+    return;
+  }
+
+  const headers = data[0].map(h => h.toString().replace(/"/g, '""')); // escape quotes
+  const rows = data.slice(1);
+
+  const tableName = 'uploaded_data';
+
+  db.serialize(() => {
+    const columnDefs = headers.map(h => `"${h}" TEXT`).join(', ');
+    db.run(`DROP TABLE IF EXISTS ${tableName}`);
+    db.run(`CREATE TABLE ${tableName} (${columnDefs});`);
+
+    const placeholders = headers.map(() => '?').join(', ');
+    const insertSQL = `INSERT INTO ${tableName} (${headers.map(h => `"${h}"`).join(', ')}) VALUES (${placeholders})`;
+    const stmt = db.prepare(insertSQL);
+
+    rows.forEach(row => {
+      const paddedRow = headers.map((_, i) => row[i] ?? null);
+      stmt.run(paddedRow);
+    });
+
+    stmt.finalize();
+
+    db.all(`SELECT * FROM ${tableName}`, [], (err, resultRows) => {
+      if (err) {
+        console.error('Error querying database:', err.message);
+      } else {
+        console.log("Data inserted successfully:");
+        console.table(resultRows);
+      }
+
+      db.close();
+    });
+  });
 }

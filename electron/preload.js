@@ -28,7 +28,8 @@ contextBridge.exposeInMainWorld(
     },
     addDataTable: (filePath) => {
       return ipcRenderer.invoke('add-data-table', filePath);
-    }
+    },
+    selectExcelFile: () => ipcRenderer.invoke('select-excel')
   }
 );
 

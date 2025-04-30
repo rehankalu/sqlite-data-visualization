@@ -14,6 +14,7 @@ function App() {
   const [tables, setTables] = useState([]);
   const [selectedTable, setSelectedTable] = useState('');
   const [tableData, setTableData] = useState([]);
+  const [dataPointVisibility, setdataPointVisibility] = useState([true]);
   const [tableColumns, setTableColumns] = useState([]);
   const [numericColumns, setNumericColumns] = useState([]);
   const [textColumns, setTextColumns] = useState([]);
@@ -71,9 +72,10 @@ function App() {
         setTextColumns(txtCols.map(col => col.name));
 
         // Reset axis and legend selections
-        setXAxis(numCols.length > 0 ? numCols[0].name : '');
-        setYAxis(numCols.length > 1 ? numCols[1].name : '');
+        setXAxis(numCols.length > 0 ? numCols[0].name : '')
+        setYAxis(numCols.length > 1 ? numCols[1].name : '')
         setCategory('');
+
       } catch (error) {
         console.error('Error loading table data:', error);
       }
@@ -82,35 +84,60 @@ function App() {
     loadTableData();
   }, [selectedTable]);
 
-  // Handles closure of form modals by Escape key 
+  // Handle closure of form modals by Escape key 
   useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (showDataPointForm && e.key === 'Escape') {
-        setShowDataPointForm(false);
+    if (!showDataPointForm && !showDataTableInputForm) return;
+
+    function handleKeyDown(e) {
+      if (e.key === 'Escape') {
+        if (showDataPointForm) {
+          setShowDataPointForm(false);
+        }
+        if (showDataTableInputForm) {
+          setShowDataTableForm(false);
+        }
       }
-      if (showDataTableInputForm && e.key === 'Escape') {
-        setShowDataTableForm(false);
-      }
-    };
+    }
 
     window.addEventListener('keydown', handleKeyDown);
-    
+
     // Cleanup on unmount
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [showDataPointForm, showDataTableInputForm]);
 
-  // Handle adding new data point
+  function handleAxisChange(data, xAxis, yAxis) {
+    return data.map((dataPoint) => {
+      if (!dataPoint[xAxis] || !dataPoint[yAxis]) {
+        return false;
+      }
+      return true;
+    })
+  }
+  // Handle changing data displayed on axis change
+  useEffect(() => {
+    setdataPointVisibility(handleAxisChange(tableData, xAxis, yAxis));
+  }, [tableData, xAxis, yAxis]);
+
+
+  // Handle data point visibility
+  function handleToggleDataPoint(checkState, i) {
+    const updatedStates = [...dataPointVisibility];
+    updatedStates[i] = checkState;
+    setdataPointVisibility(updatedStates);
+  };
+
+  // Handle adding new data point to current table
   const handleAddDataPoint = async (formData) => {
     try {
-      const response = await DatabaseService.addDataPoint(selectedTable, formData);
-      console.log(response.id)
+      await DatabaseService.addDataPoint(selectedTable, formData);
 
       // Refresh data
       const newData = await DatabaseService.getTableData(selectedTable);
       setTableData(newData);
       setShowDataPointForm(false);
+      setdataPointVisibility([...dataPointVisibility, true]);
 
     } catch (error) {
       console.error('Error adding data point:', error);
@@ -118,11 +145,11 @@ function App() {
     }
   };
 
-  // Handle adding new data table
+  // TODO: Handle adding new data table to current database
   const handleAddDataTable = async (filePath) => {
     try {
       console.log(filePath)
-      setSelectedTable(await DatabaseService.addDataTable(filePath));
+      setSelectedTable(await DatabaseService.selectExcelFile(filePath));
 
       // Refresh data
       const newData = await DatabaseService.getTableData(selectedTable);
@@ -131,59 +158,9 @@ function App() {
 
     } catch (error) {
       console.error('Error adding data table:', error);
-      alert('Failed to add data point. Check console for details.');
+      alert('Failed to add data table. Check console for details.');
     }
   };
-
-  // // Handle adding new data table
-  // const handleAddDataTable = async (formData) => {
-
-  //   const fs = require('fs');
-  //   const file = formData.get('file');
-  //   const arrayBuffer = await file.arrayBuffer();
-
-  //   const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-
-  //   if (workbook.SheetNames.length !== 1) {
-  //     alert('The Excel file must contain exactly one sheet.');
-  //     return;
-  //   }
-
-  //   const sheetName = workbook.SheetNames[0];
-  //   const sheet = workbook.Sheets[sheetName];
-  //   const data = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-
-  //   if (data.length < 2) {
-  //     alert('The sheet must contain at least one header row and one data row.');
-  //     return;
-  //   }
-
-  //   const headers = data[0];
-  //   const rows = data.slice(1);
-
-  //   const SQL = await initSqlJs();
-  //   const db = new SQL.Database();
-
-  //   const tableName = 'uploaded_data';
-  //   const columnDefs = headers.map(h => `"${h}" TEXT`).join(', ');
-  //   db.run(`CREATE TABLE ${tableName} (${columnDefs});`);
-
-  //   const stmt = db.prepare(
-  //     `INSERT INTO ${tableName} (${headers.map(h => `"${h}"`).join(', ')}) VALUES (${headers.map(() => '?').join(', ')})`
-  //   );
-
-  //   rows.forEach(row => {
-  //     const paddedRow = headers.map((_, i) => row[i] || null);
-  //     stmt.run(paddedRow);
-  //   });
-  //   stmt.free();
-
-  //   // To verify:
-  //   const result = db.exec(`SELECT * FROM ${tableName}`);
-  //   console.log(result[0].values);
-
-  //   alert('Upload complete!');
-  // };
 
   return (
     <div className="app">
@@ -249,16 +226,18 @@ function App() {
               xAxis={xAxis}
               yAxis={yAxis}
               category={category}
+              visible={dataPointVisibility}
             />
           </div>
 
           <div className="tabulation">
-
             <DataTable
               data={tableData}
               xAxis={xAxis}
               yAxis={yAxis}
               category={category}
+              visible={dataPointVisibility}
+              handleToggleDataPoint={handleToggleDataPoint}
             />
           </div>
         </div>

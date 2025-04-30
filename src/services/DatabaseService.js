@@ -55,7 +55,7 @@ class DatabaseService {
     }
   }
 
-  async addDataTable(filePath) {
+  async selectExcelFile(filePath) {
     try {
       if (!window.electronAPI) {
         throw new Error('Electron API is not available');

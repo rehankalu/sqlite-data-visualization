@@ -1,7 +1,6 @@
 import React from 'react';
-import DataPointRow from './DataPointRow';
 
-function DataTable({ data, xAxis, yAxis, category }) {
+function DataTable({ data, xAxis, yAxis, category, visible, handleToggleDataPoint }) {
 
   return (
     <table className="dataTable">
@@ -22,14 +21,29 @@ function DataTable({ data, xAxis, yAxis, category }) {
         </tr>
       </thead>
       <tbody>
-        {data.map((item) => (
-          <DataPointRow
-            key={item.id}
-            dataPoint={item}
-            xAxis={xAxis}
-            yAxis={yAxis}
-            category={category}
-          />
+        {data.map((dataPoint, i) => (
+
+          <tr key={i}>
+            <td>
+              <input
+                type="checkbox"
+                checked={visible[i]}
+                onChange={(e) => handleToggleDataPoint(e.target.checked, i)}
+              />
+            </td>
+            <td>{dataPoint.Product}</td>
+            <td>{dataPoint.Company}</td>
+            {xAxis && (
+              <td>{dataPoint[xAxis]}</td>
+            )}
+            {yAxis && (
+              <td>{dataPoint[yAxis]}</td>
+            )}
+            {category && (
+              <td>{dataPoint[category]}</td>
+            )}
+          </tr>
+
         ))}
       </tbody>
     </table>

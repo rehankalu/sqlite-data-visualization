@@ -21,11 +21,13 @@ function DataTableEntryForm({ onSubmit, onCancel }) {
     <div className="data-table-entry-form">
       <h2>Upload File</h2>
       <form onSubmit={handleSubmit}>
+        <button onClick={() => window.electronAPI.selectExcelFile()}>Upload Excel</button>
         <input type="file" accept=".xlsx,.xls" onChange={handleFileChange} />
         {selectedFile && <p>Selected file: {selectedFile.name}</p>}
 
         <div className="form-buttons">
           <button type="submit" disabled={!selectedFile}>Upload</button>
+
           <button type="button" onClick={onCancel}>Cancel</button>
         </div>
       </form>
