@@ -65,14 +65,14 @@ function ScatterPlot({ data, xAxis, yAxis, category, visible }) {
   const xMax = Math.max(...xData);
   const xBuffer = .1 * (xMax - xMin);
   const xMinBuffered = 10 * Math.floor((xMin - xBuffer) / 10);
-  const xLowerBound = xMin < 0 ? xMinBuffered : Math.max(0, xMinBuffered);
+  const xLowerBound = xMin < 0 ? xMinBuffered : 0;
   const xDom = [xLowerBound, 10 * Math.ceil((xMax + xBuffer) / 10)];
   
   const yMin = Math.min(...yData);
   const yMax = Math.max(...yData);
   const yBuffer = .1 * (yMax - yMin);
   const yMinBuffered = 10 * Math.floor((yMin - yBuffer) / 10);
-  const yLowerBound = yMin < 0 ? yMinBuffered : Math.max(0, yMinBuffered);
+  const yLowerBound = yMin < 0 ? yMinBuffered : 0;
   const yDom = [yLowerBound, 10 * Math.ceil((yMax + yBuffer) / 10)];
 
   // Adapted from https://recharts.org/en-US/examples/CustomContentOfTooltip

@@ -230,16 +230,15 @@ function App() {
             />
           </div>
 
-          <div className="tabulation">
-            <DataTable
-              data={tableData}
-              xAxis={xAxis}
-              yAxis={yAxis}
-              category={category}
-              visible={dataPointVisibility}
-              handleToggleDataPoint={handleToggleDataPoint}
-            />
-          </div>
+          <DataTable
+            selectedTable={selectedTable}
+            data={tableData}
+            xAxis={xAxis}
+            yAxis={yAxis}
+            category={category}
+            visible={dataPointVisibility}
+            handleToggleDataPoint={handleToggleDataPoint}
+          />
         </div>
       )}
 
