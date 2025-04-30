@@ -6,7 +6,7 @@ import LegendSelector from './components/LegendSelector';
 import TableSelector from './components/TableSelector';
 import DataPointEntryForm from './components/DataPointEntryForm';
 import DataTableEntryForm from './components/DataTableEntryForm';
-import Database from './services/Database';
+import DatabaseService from './services/DatabaseService';
 import './App.css';
 
 function App() {
@@ -14,6 +14,7 @@ function App() {
   const [tables, setTables] = useState([]);
   const [selectedTable, setSelectedTable] = useState('');
   const [tableData, setTableData] = useState([]);
+  const [dataPointVisibility, setdataPointVisibility] = useState([true]);
   const [tableColumns, setTableColumns] = useState([]);
   const [numericColumns, setNumericColumns] = useState([]);
   const [textColumns, setTextColumns] = useState([]);
@@ -21,7 +22,7 @@ function App() {
   const [yAxis, setYAxis] = useState('');
   const [category, setCategory] = useState('');
   const [showDataPointForm, setShowDataPointForm] = useState(false);
-  const [showDataTableInputForm, setShowDataTableInputForm] = useState(false);
+  const [showDataTableInputForm, setShowDataTableForm] = useState(false);
 
   // Load tables on component mount
   useEffect(() => {
@@ -29,13 +30,13 @@ function App() {
       try {
         // Diagnostic log
         // console.log('Attempting to load tables...');
-        if (!Database) {
+        if (!DatabaseService) {
           console.error('Database service is not available');
           setTables([]);
           return;
         }
 
-        const availableTables = await Database.getTables();
+        const availableTables = await DatabaseService.getTables();
         // Diagnostic log
         // console.log('Tables loaded:', availableTables);
         setTables(availableTables || []);
@@ -57,10 +58,10 @@ function App() {
       if (!selectedTable) return;
 
       try {
-        const data = await Database.getTableData(selectedTable);
-        const columns = await Database.getTableColumns(selectedTable);
-        const numCols = await Database.getNumericColumns(selectedTable);
-        const txtCols = await Database.getTextColumns(selectedTable);
+        const data = await DatabaseService.getTableData(selectedTable);
+        const columns = await DatabaseService.getTableColumns(selectedTable);
+        const numCols = await DatabaseService.getNumericColumns(selectedTable);
+        const txtCols = await DatabaseService.getTextColumns(selectedTable);
 
         // Filter out 'id' fields
         filtered_columns = columns.filter(col => col.name.toLowerCase() !== 'id')
@@ -71,9 +72,10 @@ function App() {
         setTextColumns(txtCols.map(col => col.name));
 
         // Reset axis and legend selections
-        setXAxis(numCols.length > 0 ? numCols[0].name : '');
-        setYAxis(numCols.length > 1 ? numCols[1].name : '');
+        setXAxis(numCols.length > 0 ? numCols[0].name : '')
+        setYAxis(numCols.length > 1 ? numCols[1].name : '')
         setCategory('');
+
       } catch (error) {
         console.error('Error loading table data:', error);
       }
@@ -82,15 +84,60 @@ function App() {
     loadTableData();
   }, [selectedTable]);
 
-  // Handle adding new data point
+  // Handle closure of form modals by Escape key 
+  useEffect(() => {
+    if (!showDataPointForm && !showDataTableInputForm) return;
+
+    function handleKeyDown(e) {
+      if (e.key === 'Escape') {
+        if (showDataPointForm) {
+          setShowDataPointForm(false);
+        }
+        if (showDataTableInputForm) {
+          setShowDataTableForm(false);
+        }
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    // Cleanup on unmount
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [showDataPointForm, showDataTableInputForm]);
+
+  function handleAxisChange(data, xAxis, yAxis) {
+    return data.map((dataPoint) => {
+      if (!dataPoint[xAxis] || !dataPoint[yAxis]) {
+        return false;
+      }
+      return true;
+    })
+  }
+  // Handle changing data displayed on axis change
+  useEffect(() => {
+    setdataPointVisibility(handleAxisChange(tableData, xAxis, yAxis));
+  }, [tableData, xAxis, yAxis]);
+
+
+  // Handle data point visibility
+  function handleToggleDataPoint(checkState, i) {
+    const updatedStates = [...dataPointVisibility];
+    updatedStates[i] = checkState;
+    setdataPointVisibility(updatedStates);
+  };
+
+  // Handle adding new data point to current table
   const handleAddDataPoint = async (formData) => {
     try {
-      await Database.addDataTable(selectedTable, formData);
+      await DatabaseService.addDataPoint(selectedTable, formData);
 
       // Refresh data
-      const newData = await Database.getTableData(selectedTable);
+      const newData = await DatabaseService.getTableData(selectedTable);
       setTableData(newData);
-      setShowDataTableInputForm(false);
+      setShowDataPointForm(false);
+      setdataPointVisibility([...dataPointVisibility, true]);
 
     } catch (error) {
       console.error('Error adding data point:', error);
@@ -98,20 +145,20 @@ function App() {
     }
   };
 
-  // Handle adding new data table
-  const handleAddDataTable = async (formData) => {
-    let newTable = {};
-
+  // TODO: Handle adding new data table to current database
+  const handleAddDataTable = async (filePath) => {
     try {
-      newTable = await Database.addDataTable(formData);
+      console.log(filePath)
+      setSelectedTable(await DatabaseService.selectExcelFile(filePath));
 
       // Refresh data
-      const newData = await Database.getTableData(newTable);
+      const newData = await DatabaseService.getTableData(selectedTable);
       setTableData(newData);
-      setShowDataPointForm(false);
+      setShowDataTableForm(false);
+
     } catch (error) {
-      console.error('Error adding data point:', error);
-      alert('Failed to add data point. Check console for details.');
+      console.error('Error adding data table:', error);
+      alert('Failed to add data table. Check console for details.');
     }
   };
 
@@ -150,25 +197,25 @@ function App() {
                   value={category}
                   onChange={setCategory}
                 />
+
+                <button
+                  className="button add-data-point-btn"
+                  onClick={() => setShowDataPointForm(true)}
+                >
+                  Add Data Point <br />
+                  to {selectedTable}
+                </button>
               </>
             )}
           </div>
-          {selectedTable && (
-            <div className="buttons">
-              <button
-                className="button add-data-point-btn"
-                onClick={() => setShowDataPointForm(true)}
-              >
-                + Add Datapoint to {selectedTable}
-              </button>
-              <button
-                className="button add-data-table-btn"
-                onClick={() => setShowDataTableInputForm(true)}
-              >
-                + Add Data Table
-              </button>
-            </div>
-          )}
+          <div className="buttons">
+            <button
+              className="button add-data-table-btn"
+              onClick={() => setShowDataTableForm(true)}
+            >
+              Add Data Table
+            </button>
+          </div>
         </div>
       </div>
       {selectedTable && xAxis && yAxis && (
@@ -179,17 +226,19 @@ function App() {
               xAxis={xAxis}
               yAxis={yAxis}
               category={category}
+              visible={dataPointVisibility}
             />
           </div>
 
-          <div className="tabulation">
-            <DataTable
-              data={tableData}
-              xAxis={xAxis}
-              yAxis={yAxis}
-              category={category}
-            />
-          </div>
+          <DataTable
+            selectedTable={selectedTable}
+            data={tableData}
+            xAxis={xAxis}
+            yAxis={yAxis}
+            category={category}
+            visible={dataPointVisibility}
+            handleToggleDataPoint={handleToggleDataPoint}
+          />
         </div>
       )}
 
@@ -210,10 +259,8 @@ function App() {
         <div className="modal">
           <div className="modal-content">
             <DataTableEntryForm
-              tableName={selectedTable}
-              columns={tableColumns}
               onSubmit={handleAddDataTable}
-              onCancel={() => setShowDataTableInputForm(false)}
+              onCancel={() => setShowDataTableForm(false)}
             />
           </div>
         </div>
