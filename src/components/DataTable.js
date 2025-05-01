@@ -1,26 +1,40 @@
 import React from 'react';
 
-import csv from "../images/csv.png"; 
-import excel from "../images/excel.png"; 
-import search from "../images/search.png"; 
+import csv from "../images/csv.png";
+import excel from "../images/excel.png";
+import search from "../images/search.png";
 
 function DataTable({ selectedTable, data, xAxis, yAxis, category, visible, handleToggleDataPoint }) {
+
+  function searchTable() {
+    const searchElem = document.getElementById("searchDataTable");
+    const searchStr = searchElem.value.toLowerCase();
+    const table_rows = document.querySelectorAll('tbody tr');
+    table_rows.forEach((row, i) => {
+      let dataPointEntry = row.textContent.toLowerCase();
+      row.classList.toggle('hide', dataPointEntry.indexOf(searchStr) < 0)
+      row.style.setProperty('--delay', i / 25 + 's');
+    })
+    document.querySelectorAll('tr:not(.hide)').forEach((visible_row, i) => {
+      visible_row.style.backgroundColor = i % 2 === 1 ? '#fffb' : "#d0d0f5";
+    })
+  }
 
   return (
     <div className="tabulation">
       <section className="table__header">
         <h1>{selectedTable}</h1>
         <div className="input-group">
-          <input type="search" placeholder="Search Data..."></input>
+          <input id="searchDataTable" type="search" placeholder="Search Data..." onInput={searchTable}></input>
           <img src={search} alt=""></img>
         </div>
         <div className="export__file">
-          <label for="export-file" className="export__file-btn" title="Export File"></label>
+          <label htmlFor="export-file" className="export__file-btn" title="Export File"></label>
           <input type="checkbox" id="export-file"></input>
           <div className="export__file-options">
             <label>Export As &nbsp; &#10140;</label>
-            <label for="export-file" id="toCSV">CSV <img src={csv} alt=""></img></label>
-            <label for="export-file" id="toEXCEL">EXCEL <img src={excel} alt=""></img></label>
+            <label htmlFor="export-file" id="toCSV">CSV <img src={csv} alt=""></img></label>
+            <label htmlFor="export-file" id="toEXCEL">EXCEL <img src={excel} alt=""></img></label>
           </div>
         </div>
       </section>

@@ -50,12 +50,12 @@ function ScatterPlot({ data, xAxis, yAxis, category, visible }) {
   }
 
   // Calculate axes domains
-  const xData = data.map(dataPointEntry => {
+  const xData = plottedData.map(dataPointEntry => {
     let dp = dataPointEntry[xAxis];
     if (dp === 0) return null;
     else return dp
   });
-  const yData = data.map(dataPointEntry => {
+  const yData = plottedData.map(dataPointEntry => {
     let dp = dataPointEntry[yAxis];
     if (dp === 0) return null;
     else return dp
@@ -65,14 +65,14 @@ function ScatterPlot({ data, xAxis, yAxis, category, visible }) {
   const xMax = Math.max(...xData);
   const xBuffer = .1 * (xMax - xMin);
   const xMinBuffered = 10 * Math.floor((xMin - xBuffer) / 10);
-  const xLowerBound = xMin < 0 ? xMinBuffered : 0;
+  const xLowerBound = xMin > 0 ? 0 : xMinBuffered;
   const xDom = [xLowerBound, 10 * Math.ceil((xMax + xBuffer) / 10)];
   
   const yMin = Math.min(...yData);
   const yMax = Math.max(...yData);
   const yBuffer = .1 * (yMax - yMin);
   const yMinBuffered = 10 * Math.floor((yMin - yBuffer) / 10);
-  const yLowerBound = yMin < 0 ? yMinBuffered : 0;
+  const yLowerBound = yMin > 0 ? 0 : yMinBuffered;
   const yDom = [yLowerBound, 10 * Math.ceil((yMax + yBuffer) / 10)];
 
   // Adapted from https://recharts.org/en-US/examples/CustomContentOfTooltip
