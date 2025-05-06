@@ -14,7 +14,7 @@ function ScatterPlot({ data, xAxis, yAxis, category, visible }) {
     if (dataPointEntry.visible) visibleDataPoints.push(dataPointEntry);
     return visibleDataPoints
   }, [])
-  
+
   const groupedData = plottedData.reduce((categories, dataPointEntry) => {
     const key = category ? dataPointEntry[category] : 'All Data';
     if (!categories[key]) categories[key] = [];
@@ -59,20 +59,28 @@ function ScatterPlot({ data, xAxis, yAxis, category, visible }) {
     let dp = dataPointEntry[yAxis];
     if (dp === 0) return null;
     else return dp
-});
+  });
 
   const xMin = Math.min(...xData);
   const xMax = Math.max(...xData);
   const xBuffer = .1 * (xMax - xMin);
   const xMinBuffered = 10 * Math.floor((xMin - xBuffer) / 10);
-  const xLowerBound = xMin > 0 ? 0 : xMinBuffered;
+  let xLowerBound;
+  if (xMin >= 0) {
+    if (xMinBuffered < 0) xLowerBound = 0;
+    else xLowerBound = xMinBuffered;
+  } else xLowerBound = xMinBuffered;
   const xDom = [xLowerBound, 10 * Math.ceil((xMax + xBuffer) / 10)];
-  
+
   const yMin = Math.min(...yData);
   const yMax = Math.max(...yData);
   const yBuffer = .1 * (yMax - yMin);
-  const yMinBuffered = 10 * Math.floor((yMin - yBuffer) / 10);
-  const yLowerBound = yMin > 0 ? 0 : yMinBuffered;
+  const yMinBuffered = 10 * Math.floor((yMin - yBuffer) / 10);  
+  let yLowerBound;
+  if (yMin >= 0) {
+    if (yMinBuffered < 0) yLowerBound = 0;
+    else yLowerBound = yMinBuffered;
+  } else yLowerBound = yMinBuffered;
   const yDom = [yLowerBound, 10 * Math.ceil((yMax + yBuffer) / 10)];
 
   // Adapted from https://recharts.org/en-US/examples/CustomContentOfTooltip
@@ -92,26 +100,30 @@ function ScatterPlot({ data, xAxis, yAxis, category, visible }) {
 
     return null;
   };
-
+  
   return (
     <ResponsiveContainer width="100%" height="90%">
       <ScatterChart
         margin={{ top: 20, right: 30, left: 20, bottom: 10 }}
       >
-        <CartesianGrid strokeDasharray="3 3" />
+        <CartesianGrid fill='#fff' stroke='black' strokeDasharray="3 3" />
         <XAxis
           type="number"
           domain={xDom}
           dataKey={xAxis}
           name={xAxis}
-          label={{ value: xLabel, position: 'insideBottomRight', offset: -5 }}
+          label={{ value: xLabel, fill: '#fff', position: 'insideBottom', offset: -5 }}
+          textStyle={{ fontWeight: 'bold' }}
+          tick={{ fill: '#fff' }}
         />
         <YAxis
           type="number"
           domain={yDom}
           dataKey={yAxis}
           name={yAxis}
-          label={{ value: yLabel, angle: -90, position: 'insideLeft' }}
+          label={{ value: yLabel, fill: '#fff', angle: -90, position: 'insideLeft' }}
+          textStyle={{ fontWeight: 'bold' }}
+          tick={{ fill: '#fff' }}
         />
         <Tooltip
           cursor={{ strokeDasharray: '3 3' }}
@@ -121,7 +133,8 @@ function ScatterPlot({ data, xAxis, yAxis, category, visible }) {
             />}
         />
         <Legend
-          wrapperStyle={{ paddingTop: "20px" }}
+          fill='#fff'
+          wrapperStyle={{ justifyContent: "center", paddingTop: "35px", paddingLeft: "150px", paddingRight: "150px", display: "flex" }}
         />
 
         {/* Think: groupedData = categories == {"Puppy": [dpA, dpB], "Kitten": [dpC]} */}
@@ -131,6 +144,12 @@ function ScatterPlot({ data, xAxis, yAxis, category, visible }) {
             name={key}
             data={items}
             fill={colors[index % colors.length]}
+            z_axis={{
+              range: [20, 20], // Size range of markers
+              name: "Size", // Name of the axis
+              unit: "px", // Unit of the size
+              scale: "linear", // Scale of the axis (e.g., linear, log)
+            }}
           />
         ))}
       </ScatterChart>

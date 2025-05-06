@@ -107,7 +107,8 @@ function App() {
     };
   }, [showDataPointForm, showDataTableInputForm]);
 
-  function handleAxisChange(data, xAxis, yAxis) {
+  // Assigns visibility true iff datapoint has values for both selected variables
+  function handleDataVisibilityOnAxisChange(data, xAxis, yAxis) {
     return data.map((dataPoint) => {
       if (!dataPoint[xAxis] || !dataPoint[yAxis]) {
         return false;
@@ -115,13 +116,13 @@ function App() {
       return true;
     })
   }
-  // Handle changing data displayed on axis change
+
+  // Handle changing datapoints displayed on data change
   useEffect(() => {
-    setdataPointVisibility(handleAxisChange(tableData, xAxis, yAxis));
+    setdataPointVisibility(handleDataVisibilityOnAxisChange(tableData, xAxis, yAxis));
   }, [tableData, xAxis, yAxis]);
 
-
-  // Handle data point visibility
+  // Handle data point visibility on ScatterPlot based on interactions with the DataTable
   function handleToggleDataPoint(checkState, i) {
     const updatedStates = [...dataPointVisibility];
     updatedStates[i] = checkState;

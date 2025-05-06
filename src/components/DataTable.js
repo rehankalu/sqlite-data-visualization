@@ -20,6 +20,8 @@ function DataTable({ selectedTable, data, xAxis, yAxis, category, visible, handl
     })
   }
 
+  const sampleDataCols = Object.keys(data[0]).includes("Company");
+
   return (
     <div className="tabulation">
       <section className="table__header">
@@ -43,8 +45,12 @@ function DataTable({ selectedTable, data, xAxis, yAxis, category, visible, handl
           <thead>
             <tr key="header">
               <th>Shown</th>
-              <th>Product</th>
-              <th>Company</th>
+              {sampleDataCols && (
+                <th>Product</th>
+              )}
+              {sampleDataCols && (
+                <th>Company</th>
+              )}
               {xAxis && (
                 <th>{xAxis}</th>
               )}
@@ -67,8 +73,12 @@ function DataTable({ selectedTable, data, xAxis, yAxis, category, visible, handl
                     onChange={(e) => handleToggleDataPoint(e.target.checked, i)}
                   />
                 </td>
-                <td>{dataPoint.Product}</td>
-                <td>{dataPoint.Company}</td>
+                {sampleDataCols && (
+                  <td>{dataPoint.Product}</td>
+                )}
+                {sampleDataCols && (
+                  <td>{dataPoint.Company}</td>
+                )}
                 {xAxis && (
                   <td>{dataPoint[xAxis]}</td>
                 )}
